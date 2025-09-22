@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Generated files
+*.log
+*.tgz
+
+# Cache directories
+.cache/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Phaser build files
+public/assets/
