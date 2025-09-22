@@ -83,18 +83,18 @@ function App()
     return (
         <div id="app">
             <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />
-            <div>
+            <div className="flex flex-col gap-4 p-4">
                 <div>
-                    <button className="button" onClick={changeScene}>Change Scene</button>
+                    <button className="px-4 py-2 bg-black text-white border border-white hover:border-cyan-400 hover:text-cyan-400 active:bg-cyan-400 transition-all duration-300 w-36" onClick={changeScene}>Change Scene</button>
                 </div>
                 <div>
-                    <button disabled={canMoveSprite} className="button" onClick={moveSprite}>Toggle Movement</button>
+                    <button disabled={canMoveSprite} className="px-4 py-2 bg-black text-white border border-white hover:border-cyan-400 hover:text-cyan-400 active:bg-cyan-400 disabled:border-gray-600 disabled:text-gray-600 disabled:cursor-not-allowed transition-all duration-300 w-36" onClick={moveSprite}>Toggle Movement</button>
                 </div>
-                <div className="spritePosition">Sprite Position:
-                    <pre>{`{\n  x: ${spritePosition.x}\n  y: ${spritePosition.y}\n}`}</pre>
+                <div className="mt-2 text-sm">Sprite Positions:
+                    <pre className="text-xs">{`{\n  x: ${spritePosition.x}\n  y: ${spritePosition.y}\n}`}</pre>
                 </div>
                 <div>
-                    <button className="button" onClick={addSprite}>Add New Sprite</button>
+                    <button className="px-4 py-2 bg-black text-white border border-white hover:border-cyan-400 hover:text-cyan-400 active:bg-cyan-400 transition-all duration-300 w-36" onClick={addSprite}>Add New Sprite</button>
                 </div>
             </div>
         </div>
