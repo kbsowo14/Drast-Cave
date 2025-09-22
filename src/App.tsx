@@ -3,13 +3,17 @@ import { IRefPhaserGame, PhaserGame } from './PhaserGame'
 import { MainMenu } from './game/scenes/MainMenu'
 
 function App() {
-	// The sprite can only be moved in the MainMenu Scene
-	const [canMoveSprite, setCanMoveSprite] = useState(true)
+	/** 현재 씬 이름 */
+	const [currentSceneName, setcurrentSceneName] = useState('')
 
 	//  References to the PhaserGame component (game and scene are exposed)
 	const phaserRef = useRef<IRefPhaserGame | null>(null)
 	const [spritePosition, setSpritePosition] = useState({ x: 0, y: 0 })
 
+	/**
+	 * @description
+	 * 씬 변경
+	 */
 	const changeScene = () => {
 		if (phaserRef.current) {
 			const scene = phaserRef.current.scene as MainMenu
@@ -20,6 +24,10 @@ function App() {
 		}
 	}
 
+	/**
+	 * @description
+	 * 스프라이트 이동
+	 */
 	const moveSprite = () => {
 		if (phaserRef.current) {
 			const scene = phaserRef.current.scene as MainMenu
@@ -33,6 +41,10 @@ function App() {
 		}
 	}
 
+	/**
+	 * @description
+	 * 스프라이트 추가
+	 */
 	const addSprite = () => {
 		if (phaserRef.current) {
 			const scene = phaserRef.current.scene
@@ -59,9 +71,12 @@ function App() {
 		}
 	}
 
-	// Event emitted from the PhaserGame component
+	/**
+	 * @description
+	 * 현재 어떤 씬이 활성화 되어있는지 세팅
+	 */
 	const currentScene = (scene: Phaser.Scene) => {
-		setCanMoveSprite(scene.scene.key !== 'MainMenu')
+		setcurrentSceneName(scene?.scene?.key || '')
 	}
 
 	return (
@@ -78,7 +93,7 @@ function App() {
 				</div>
 				<div>
 					<button
-						disabled={canMoveSprite}
+						disabled={currentSceneName !== 'MainMenu'}
 						className="px-4 py-2 bg-black text-white border border-white hover:border-cyan-400 hover:text-cyan-400 active:bg-cyan-400 disabled:border-gray-600 disabled:text-gray-600 disabled:cursor-not-allowed transition-all duration-300 w-36"
 						onClick={moveSprite}
 					>
