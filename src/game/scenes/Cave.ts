@@ -205,5 +205,8 @@ export class Cave extends Scene {
 
 		console.log('🚀 gameMap', this.gameMap)
 		EventBus.emit('current-scene-ready', this)
+
+		// 씬 시작 시 페이드인
+		this.cameras.main.fadeIn(500, 0, 0, 0) // 500ms 동안 페이드인
 	}
 }
