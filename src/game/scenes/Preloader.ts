@@ -26,7 +26,11 @@ export class Preloader extends Scene {
 		// 게임용 에셋을 로드합니다 - 여러분의 에셋으로 교체하세요
 		this.load.setPath('assets')
 
-		// this.load.image('star', 'star.png')
+		this.load.image('soil-01', 'soil-01.png')
+		this.load.image('rock-01', 'rock-01.png')
+		this.load.image('rock-02', 'rock-02.png')
+		this.load.image('rock-03', 'rock-03.png')
+		this.load.image('rock-04', 'rock-04.png')
 	}
 
 	create() {
