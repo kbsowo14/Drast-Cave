@@ -7,7 +7,7 @@ export class Preloader extends Scene {
 
 	init() {
 		// Boot Scene에서 로드한 이미지를 여기서 표시할 수 있습니다
-		this.add.image(512, 384, 'cave_bg')
+		this.add.image(512, 384, 'drast-cave_intro')
 
 		// 간단한 진행률 바입니다. 이것은 바의 외곽선입니다.
 		this.add.rectangle(512, 384, 468, 32).setStrokeStyle(1, 0xffffff)

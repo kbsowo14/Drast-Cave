@@ -13,7 +13,7 @@ export class Boot extends Scene {
 		 * 이곳에서 불러오는 에셋은 파일 크기가 작을수록 좋습니다.
 		 */
 
-		this.load.image('cave_bg', 'assets/cave_bg.png')
+		this.load.image('drast-cave_intro', 'assets/drast-cave_intro.png')
 	}
 
 	create() {

@@ -52,7 +52,7 @@ export class MainMenu extends Scene {
 	}
 
 	create() {
-		this.background = this.add.image(512, 384, 'cave_bg')
+		this.background = this.add.image(512, 384, 'drast-cave_intro')
 
 		this.title = this.add
 			.text(512, 460, 'Drast Cave', {
