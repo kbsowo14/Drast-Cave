@@ -31,6 +31,7 @@ export class Preloader extends Scene {
 		this.load.image('rock-02', 'rock-02.png')
 		this.load.image('rock-03', 'rock-03.png')
 		this.load.image('rock-04', 'rock-04.png')
+		this.load.image('dark', 'dark.png') // 횃불 모서리 어둠 에셋
 	}
 
 	create() {

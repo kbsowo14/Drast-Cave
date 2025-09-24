@@ -41,7 +41,13 @@ export class Cave extends Scene {
 	private darknessBottom: Phaser.GameObjects.Graphics
 	private darknessLeft: Phaser.GameObjects.Graphics
 	private darknessRight: Phaser.GameObjects.Graphics
-	private readonly LIGHT_SIZE = 200 // 횃불 빛의 사각형 크기 (100x2)
+	private readonly LIGHT_SIZE = 400 // 횃불 빛의 사각형 크기 (200x200)
+
+	// 모서리 둥글게 만들기 위한 이미지들
+	private cornerTopLeft: Phaser.GameObjects.Image
+	private cornerTopRight: Phaser.GameObjects.Image
+	private cornerBottomLeft: Phaser.GameObjects.Image
+	private cornerBottomRight: Phaser.GameObjects.Image
 
 	/**
 	 * @description
@@ -305,7 +311,7 @@ export class Cave extends Scene {
 
 	/**
 	 * @description
-	 * 어둠과 횃불 시스템 생성 (4개 사각형 방식)
+	 * 어둠과 횃불 시스템 생성 (4개 사각형 + 둥근 모서리)
 	 */
 	private createDarknessSystem(): void {
 		// 4개의 검은색 사각형 생성
@@ -326,11 +332,43 @@ export class Cave extends Scene {
 		this.darknessLeft.fillStyle(0x000000, 1)
 		this.darknessRight.fillStyle(0x000000, 1)
 
+		// 둥근 모서리 이미지 생성
+		this.createCornerImages()
+
 		// 초기 어둠 위치 설정
 		this.updateDarkness()
 
-		// 횃불 깜빡임 효과 (선택사항)
+		// 횃불 깜빡임 효과
 		this.createTorchFlicker()
+	}
+
+	/**
+	 * @description
+	 * 4개 모서리에 둥근 어둠 이미지 생성
+	 */
+	private createCornerImages(): void {
+		// 좌상단 모서리 (원본) - 사각형 밖쪽 모서리에 위치
+		this.cornerTopLeft = this.add.image(0, 0, 'dark')
+		this.cornerTopLeft.setDepth(201)
+		this.cornerTopLeft.setOrigin(0, 0)
+
+		// 우상단 모서리 (90도 시계방향 회전)
+		this.cornerTopRight = this.add.image(0, 0, 'dark')
+		this.cornerTopRight.setDepth(201)
+		this.cornerTopRight.setOrigin(0, 0)
+		this.cornerTopRight.setRotation(Phaser.Math.DegToRad(90))
+
+		// 우하단 모서리 (180도 회전)
+		this.cornerBottomRight = this.add.image(0, 0, 'dark')
+		this.cornerBottomRight.setDepth(201)
+		this.cornerBottomRight.setOrigin(0, 0)
+		this.cornerBottomRight.setRotation(Phaser.Math.DegToRad(180))
+
+		// 좌하단 모서리 (270도 회전)
+		this.cornerBottomLeft = this.add.image(0, 0, 'dark')
+		this.cornerBottomLeft.setDepth(201)
+		this.cornerBottomLeft.setOrigin(0, 0)
+		this.cornerBottomLeft.setRotation(Phaser.Math.DegToRad(270))
 	}
 
 	/**
@@ -348,8 +386,8 @@ export class Cave extends Scene {
 				// 임시로 빛 크기 변경하고 위치 업데이트
 				const originalSize = this.LIGHT_SIZE
 				;(this as any).LIGHT_SIZE = Math.max(
-					150,
-					Math.min(200, this.LIGHT_SIZE + flickerAmount * 2)
+					350,
+					Math.min(400, this.LIGHT_SIZE + flickerAmount * 2)
 				)
 				this.updateDarkness()
 				;(this as any).LIGHT_SIZE = originalSize
@@ -360,7 +398,7 @@ export class Cave extends Scene {
 
 	/**
 	 * @description
-	 * 4개 어둠 사각형 위치 업데이트 (플레이어 주변만 밝게 남김)
+	 * 4개 어둠 사각형 + 모서리 이미지 위치 업데이트 (원형 횃불 효과)
 	 */
 	private updateDarkness(): void {
 		// 플레이어의 실제 픽셀 위치
@@ -400,6 +438,32 @@ export class Cave extends Scene {
 
 		// 우측 어둠 (플레이어 오른쪽을 가림)
 		this.darknessRight.fillRect(rightBound, topBound, extraSize * 2, this.LIGHT_SIZE)
+
+		// 둥근 모서리 이미지 위치 업데이트
+		this.updateCornerPositions(leftBound, rightBound, topBound, bottomBound)
+	}
+
+	/**
+	 * @description
+	 * 4개 모서리 이미지 위치 업데이트 - 사각형 밖쪽 모서리에 정확히 배치
+	 */
+	private updateCornerPositions(
+		leftBound: number,
+		rightBound: number,
+		topBound: number,
+		bottomBound: number
+	): void {
+		// 좌상단 모서리 - 밝은 영역의 좌상단 모서리에 배치
+		this.cornerTopLeft.setPosition(leftBound, topBound)
+
+		// 우상단 모서리 - 밝은 영역의 우상단 모서리에 배치
+		this.cornerTopRight.setPosition(rightBound, topBound)
+
+		// 우하단 모서리 - 밝은 영역의 우하단 모서리에 배치
+		this.cornerBottomRight.setPosition(rightBound, bottomBound)
+
+		// 좌하단 모서리 - 밝은 영역의 좌하단 모서리에 배치
+		this.cornerBottomLeft.setPosition(leftBound, bottomBound)
 	}
 
 	/**
