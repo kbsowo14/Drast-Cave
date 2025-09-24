@@ -32,6 +32,18 @@ export class Preloader extends Scene {
 		this.load.image('rock-03', 'rock-03.png')
 		this.load.image('rock-04', 'rock-04.png')
 		this.load.image('dark', 'dark.png') // 횃불 모서리 어둠 에셋
+
+		// 플레이어 캐릭터 에셋 로드 (현재는 stop 이미지만 사용)
+		this.load.spritesheet('player-stop', 'player-stop.png', {
+			frameWidth: 32,
+			frameHeight: 32,
+		}) // 4방향 정지 상태 스프라이트시트
+
+		// running 에셋은 나중에 필요할 때 추가
+		// this.load.spritesheet('player-running', 'player-running.gif', {
+		// 	frameWidth: 32,
+		// 	frameHeight: 32,
+		// })
 	}
 
 	create() {

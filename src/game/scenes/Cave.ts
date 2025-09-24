@@ -36,6 +36,16 @@ export class Cave extends Scene {
 	private readonly MOVE_DELAY = 150 // 150ms마다 이동
 	private readonly ANIMATION_DURATION = 150 // 150ms 애니메이션
 
+	// 플레이어 애니메이션 관련
+	private playerDirection: 'down' | 'left' | 'up' | 'right' = 'down' // 현재 바라보는 방향
+	private isPlayerMoving: boolean = false // 현재 이동 중인지 여부
+	private readonly DIRECTION_FRAMES = {
+		down: 0, // 하 (첫번째 프레임)
+		left: 1, // 좌 (두번째 프레임)
+		up: 2, // 상 (세번째 프레임)
+		right: 3, // 우 (네번째 프레임)
+	}
+
 	// 횃불 시스템 속성 (사각형 방식)
 	private darknessTop: Phaser.GameObjects.Graphics
 	private darknessBottom: Phaser.GameObjects.Graphics
@@ -302,11 +312,99 @@ export class Cave extends Scene {
 		const pixelX = this.playerGridX * this.BLOCK_SIZE + this.BLOCK_SIZE / 2
 		const pixelY = this.playerGridY * this.BLOCK_SIZE + this.BLOCK_SIZE / 2
 
-		// 플레이어 스프라이트 생성 (임시로 원형 도형 사용)
-		this.player = this.add.sprite(pixelX, pixelY, 'player')
+		// 플레이어 스프라이트 생성 (정지 상태로 시작)
+		this.player = this.add.sprite(pixelX, pixelY, 'player-stop')
 		this.player.setDisplaySize(28, 28) // 블럭보다 약간 작게
 		this.player.setDepth(100) // 블럭들 위에 표시
-		this.player.setTint(0xffaa00) // 횃불 색상으로 변경
+
+		// 초기 방향 설정 (아래쪽을 바라봄)
+		this.updatePlayerSprite()
+	}
+
+	/**
+	 * @description
+	 * Atlas 방식 애니메이션 생성 (Phaser 공식 권장)
+	 */
+	private createGifAnimations(): void {
+		console.log('🎬 Creating Atlas-based animations...')
+
+		// 각 방향별로 애니메이션 생성
+		const directions = ['down', 'left', 'up', 'right']
+
+		directions.forEach((direction, dirIndex) => {
+			// Atlas에서 사용 가능한 프레임들 확인
+			const runningTexture = this.textures.get('player-running')
+			const stopTexture = this.textures.get('player-stop')
+
+			console.log(`📊 Running atlas frames:`, runningTexture.getFrameNames())
+			console.log(`📊 Stop atlas frames:`, stopTexture.getFrameNames())
+
+			// 달리기 애니메이션 프레임 수집
+			const runningFrames = []
+			const frameNames = runningTexture.getFrameNames()
+
+			// 해당 방향의 프레임들 찾기 (예: "down_1", "down_2", "left_1", "left_2" 등)
+			const directionFrames = frameNames.filter(
+				name => name.toLowerCase().includes(direction) || name.includes(dirIndex.toString())
+			)
+
+			// 방향별 프레임이 있으면 사용, 없으면 기본 프레임 사용
+			if (directionFrames.length > 0) {
+				directionFrames.forEach(frameName => {
+					runningFrames.push({ key: 'player-running', frame: frameName })
+				})
+			} else {
+				// 기본: 숫자 인덱스 사용 (0, 1, 2, 3)
+				runningFrames.push({ key: 'player-running', frame: dirIndex.toString() })
+			}
+
+			// 달리기 애니메이션 생성
+			this.anims.create({
+				key: `player-run-${direction}`,
+				frames: runningFrames,
+				frameRate: 8, // 초당 8프레임
+				repeat: -1, // 무한 반복
+			})
+
+			// 정지 애니메이션 (단일 프레임)
+			const stopFrameName =
+				stopTexture
+					.getFrameNames()
+					.find(
+						name => name.toLowerCase().includes(direction) || name.includes(dirIndex.toString())
+					) || dirIndex.toString()
+
+			this.anims.create({
+				key: `player-stop-${direction}`,
+				frames: [{ key: 'player-stop', frame: stopFrameName }],
+				frameRate: 1,
+			})
+
+			console.log(
+				`✅ Created animations for ${direction}: ${runningFrames.length} running frames`
+			)
+		})
+	}
+
+	/**
+	 * @description
+	 * 플레이어 스프라이트 업데이트 (단순한 프레임 교체 방식)
+	 */
+	private updatePlayerSprite(): void {
+		// stop 이미지의 해당 방향 프레임만 사용
+		const frameIndex = this.DIRECTION_FRAMES[this.playerDirection]
+
+		console.log(`🎮 Player frame: ${frameIndex}, direction: ${this.playerDirection}`)
+
+		// 텍스처 존재 여부 확인
+		if (!this.textures.exists('player-stop')) {
+			console.error(`❌ Texture 'player-stop' not found!`)
+			return
+		}
+
+		// stop 이미지의 해당 방향 프레임으로 설정
+		this.player.setTexture('player-stop', frameIndex)
+		console.log(`✅ Frame applied: player-stop frame ${frameIndex}`)
 	}
 
 	/**
@@ -498,6 +596,10 @@ export class Cave extends Scene {
 		const pixelX = newGridX * this.BLOCK_SIZE + this.BLOCK_SIZE / 2
 		const pixelY = newGridY * this.BLOCK_SIZE + this.BLOCK_SIZE / 2
 
+		// 이동 중 상태로 변경
+		this.isPlayerMoving = true
+		this.updatePlayerSprite()
+
 		// 부드러운 이동 애니메이션
 		this.tweens.add({
 			targets: this.player,
@@ -508,6 +610,11 @@ export class Cave extends Scene {
 			onUpdate: () => {
 				// 이동 중에도 횃불 빛 위치 업데이트
 				this.updateDarkness()
+			},
+			onComplete: () => {
+				// 이동 완료 후에도 연속 이동 중이라면 달리기 상태 유지
+				// 연속 이동이 멈췄을 때만 정지 상태로 변경
+				console.log('🏃 Move completed, currentDirection:', this.currentDirection)
 			},
 		})
 
@@ -589,6 +696,10 @@ export class Cave extends Scene {
 			this.moveTimer = null
 		}
 		this.currentDirection = null
+
+		// 이동 중지 시 정지 상태로 전환
+		this.isPlayerMoving = false
+		this.updatePlayerSprite()
 	}
 
 	/**
@@ -607,17 +718,22 @@ export class Cave extends Scene {
 		let newGridX = this.playerGridX
 		let newGridY = this.playerGridY
 
+		// 키 입력에 따른 방향 설정 및 이동 계산
 		switch (keyCode) {
 			case 'ArrowUp':
+				this.playerDirection = 'up'
 				newGridY = Math.max(0, this.playerGridY - 1)
 				break
 			case 'ArrowDown':
+				this.playerDirection = 'down'
 				newGridY = Math.min(23, this.playerGridY + 1) // 24-1
 				break
 			case 'ArrowLeft':
+				this.playerDirection = 'left'
 				newGridX = Math.max(0, this.playerGridX - 1)
 				break
 			case 'ArrowRight':
+				this.playerDirection = 'right'
 				newGridX = Math.min(31, this.playerGridX + 1) // 32-1
 				break
 		}
