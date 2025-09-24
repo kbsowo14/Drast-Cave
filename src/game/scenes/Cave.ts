@@ -36,6 +36,13 @@ export class Cave extends Scene {
 	private readonly MOVE_DELAY = 150 // 150ms마다 이동
 	private readonly ANIMATION_DURATION = 150 // 150ms 애니메이션
 
+	// 횃불 시스템 속성 (사각형 방식)
+	private darknessTop: Phaser.GameObjects.Graphics
+	private darknessBottom: Phaser.GameObjects.Graphics
+	private darknessLeft: Phaser.GameObjects.Graphics
+	private darknessRight: Phaser.GameObjects.Graphics
+	private readonly LIGHT_SIZE = 200 // 횃불 빛의 사각형 크기 (100x2)
+
 	/**
 	 * @description
 	 * 맵 초기화
@@ -293,7 +300,106 @@ export class Cave extends Scene {
 		this.player = this.add.sprite(pixelX, pixelY, 'player')
 		this.player.setDisplaySize(28, 28) // 블럭보다 약간 작게
 		this.player.setDepth(100) // 블럭들 위에 표시
-		this.player.setTint(0x00ff00) // 초록색으로 표시
+		this.player.setTint(0xffaa00) // 횃불 색상으로 변경
+	}
+
+	/**
+	 * @description
+	 * 어둠과 횃불 시스템 생성 (4개 사각형 방식)
+	 */
+	private createDarknessSystem(): void {
+		// 4개의 검은색 사각형 생성
+		this.darknessTop = this.add.graphics()
+		this.darknessBottom = this.add.graphics()
+		this.darknessLeft = this.add.graphics()
+		this.darknessRight = this.add.graphics()
+
+		// 모든 어둠 면을 최상위에 표시
+		this.darknessTop.setDepth(200)
+		this.darknessBottom.setDepth(200)
+		this.darknessLeft.setDepth(200)
+		this.darknessRight.setDepth(200)
+
+		// 검은색으로 채우기
+		this.darknessTop.fillStyle(0x000000, 1)
+		this.darknessBottom.fillStyle(0x000000, 1)
+		this.darknessLeft.fillStyle(0x000000, 1)
+		this.darknessRight.fillStyle(0x000000, 1)
+
+		// 초기 어둠 위치 설정
+		this.updateDarkness()
+
+		// 횃불 깜빡임 효과 (선택사항)
+		this.createTorchFlicker()
+	}
+
+	/**
+	 * @description
+	 * 횃불 깜빡임 효과 생성
+	 */
+	private createTorchFlicker(): void {
+		// 0.5초마다 빛의 크기를 약간 변화시켜 깜빡임 효과 연출
+		this.time.addEvent({
+			delay: 100,
+			callback: () => {
+				// 랜덤하게 빛의 반지름을 조금씩 변화
+				const flickerAmount = Phaser.Math.Between(-5, 5)
+
+				// 임시로 빛 크기 변경하고 위치 업데이트
+				const originalSize = this.LIGHT_SIZE
+				;(this as any).LIGHT_SIZE = Math.max(
+					150,
+					Math.min(200, this.LIGHT_SIZE + flickerAmount * 2)
+				)
+				this.updateDarkness()
+				;(this as any).LIGHT_SIZE = originalSize
+			},
+			loop: true,
+		})
+	}
+
+	/**
+	 * @description
+	 * 4개 어둠 사각형 위치 업데이트 (플레이어 주변만 밝게 남김)
+	 */
+	private updateDarkness(): void {
+		// 플레이어의 실제 픽셀 위치
+		const playerX = this.player.x
+		const playerY = this.player.y
+
+		// 플레이어 주변 밝은 영역의 경계 계산
+		const lightHalfSize = this.LIGHT_SIZE / 2
+		const leftBound = playerX - lightHalfSize
+		const rightBound = playerX + lightHalfSize
+		const topBound = playerY - lightHalfSize
+		const bottomBound = playerY + lightHalfSize
+
+		// 화면 크기의 2배로 설정 (여유분 확보)
+		const extraSize = Math.max(this.SCREEN_WIDTH, this.SCREEN_HEIGHT)
+
+		// 기존 그래픽 지우기
+		this.darknessTop.clear()
+		this.darknessBottom.clear()
+		this.darknessLeft.clear()
+		this.darknessRight.clear()
+
+		// 다시 검은색으로 설정
+		this.darknessTop.fillStyle(0x000000, 1)
+		this.darknessBottom.fillStyle(0x000000, 1)
+		this.darknessLeft.fillStyle(0x000000, 1)
+		this.darknessRight.fillStyle(0x000000, 1)
+
+		// 상단 어둠 (플레이어 위쪽 전체를 가림)
+		this.darknessTop.fillRect(-extraSize, -extraSize, extraSize * 2, topBound + extraSize)
+
+		// 하단 어둠 (플레이어 아래쪽 전체를 가림)
+		this.darknessBottom.fillRect(-extraSize, bottomBound, extraSize * 2, extraSize * 2)
+
+		// 좌측 어둠 (플레이어 왼쪽을 가림)
+		this.darknessLeft.fillRect(-extraSize, topBound, leftBound + extraSize, this.LIGHT_SIZE)
+
+		// 우측 어둠 (플레이어 오른쪽을 가림)
+		this.darknessRight.fillRect(rightBound, topBound, extraSize * 2, this.LIGHT_SIZE)
 	}
 
 	/**
@@ -333,9 +439,16 @@ export class Cave extends Scene {
 			targets: this.player,
 			x: pixelX,
 			y: pixelY,
-			duration: this.ANIMATION_DURATION, // 120ms 이동 시간
+			duration: this.ANIMATION_DURATION, // 150ms 이동 시간
 			ease: 'Linear', // 선형 이동으로 더 부드럽게
+			onUpdate: () => {
+				// 이동 중에도 횃불 빛 위치 업데이트
+				this.updateDarkness()
+			},
 		})
+
+		// 횃불 빛 위치 즉시 업데이트
+		this.updateDarkness()
 
 		// 카메라가 플레이어를 부드럽게 따라가기
 		const centerX = pixelX - 512 // 화면 중앙
@@ -479,11 +592,6 @@ export class Cave extends Scene {
 	// 	localStorage.setItem(`player-region-${this.playerRegionId}`, JSON.stringify(regionData))
 	// }
 
-	private isInPlayerRegion(x: number, y: number): boolean {
-		const region = this.getRegionCoordinates(this.playerRegionId)
-		return x >= region.startX && x < region.endX && y >= region.startY && y < region.endY
-	}
-
 	/**
 	 * @description
 	 * 맵 렌더링
@@ -521,6 +629,9 @@ export class Cave extends Scene {
 		// 플레이어 관련 초기화 추가
 		this.createPlayer() // 5) 플레이어 생성
 		this.setupInput() // 6) 키보드 입력 설정
+
+		// 횃불 시스템 초기화
+		this.createDarknessSystem() // 7) 어둠과 횃불 시스템 생성
 
 		console.log('🚀 gameMap', this.gameMap)
 		EventBus.emit('current-scene-ready', this)
